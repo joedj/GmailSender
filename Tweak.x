@@ -16,7 +16,7 @@ static NSArray *addresses_for_account(NSString *identifier) {
             dispatch_once(&once, ^{
                 CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, &toggle, CFSTR("net.joedj.gmailsender"), NULL, 0);
             });
-            settings = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/net.joedj.gmailsender.plist"];
+            settings = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/net.joedj.gmailsender.plist"] ?: @{};
         }
         return [settings[identifier] componentsSeparatedByString:@" "];
     }
