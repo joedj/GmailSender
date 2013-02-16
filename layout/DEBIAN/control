@@ -1,0 +1,15 @@
+Package: net.joedj.gmailsender
+Author: joedj <gmailsender@joedj.net>
+Name: GmailSender
+Depends: firmware (>= 5.0), mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Set Gmail From addresses
+Maintainer: BigBoss <bigboss@thebigboss.org>
+Section: Tweaks
+Depiction: http://moreinfo.thebigboss.org/moreinfo/depiction.php?file=gmailsenderDp
+Homepage: http://moreinfo.thebigboss.org/moreinfo/depiction.php?file=gmailsenderDp
+Icon: file:///Library/Application%20Support/GmailSender/GmailSender.png
+Sponsor: thebigboss.org <http://thebigboss.org>
+Tag: purpose::extension, role::enduser
+dev: joejordan
