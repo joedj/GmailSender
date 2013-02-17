@@ -18,23 +18,25 @@ static NSArray *addresses_for_account(NSString *identifier) {
             });
             settings = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/net.joedj.gmailsender.plist"] ?: @{};
         }
-        return [settings[identifier] componentsSeparatedByString:@" "];
+        return [settings[identifier] componentsSeparatedByString:@" "] ?: @[];
     }
 }
 
 %group IMAP
 %hook GmailAccount
 - (NSArray *)emailAddresses {
-    NSMutableArray *addresses = (NSMutableArray *)%orig;
+    NSArray *addresses = %orig;
     NSArray *fromAddresses = addresses_for_account(self.identifier);
     if (fromAddresses.count) {
-        addresses = [NSMutableArray arrayWithArray:addresses];
-        NSUInteger fromAddressIndex = 0;
-        for (NSString *address in fromAddresses) {
-            if (address.length && ![addresses containsObject:address]) {
-                [addresses insertObject:address atIndex:fromAddressIndex++];
+        NSMutableArray *newAddresses = [[NSMutableArray alloc] init];
+        NSMutableSet *seenAddresses = [[NSMutableSet alloc] init];
+        for (NSString *address in [fromAddresses arrayByAddingObjectsFromArray:addresses]) {
+            if (address.length && ![seenAddresses containsObject:address]) {
+                [newAddresses addObject:address];
+                [seenAddresses addObject:address];
             }
         }
+        addresses = newAddresses;
     }
     return addresses;
 }
