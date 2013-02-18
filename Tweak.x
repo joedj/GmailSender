@@ -1,4 +1,4 @@
-#import "GmailAccount.h"
+#import "MailAccount.h"
 
 static NSObject *lock;
 static NSDictionary *settings;
@@ -22,38 +22,45 @@ static NSArray *addresses_for_account(NSString *identifier) {
     }
 }
 
-%group IMAP
-%hook GmailAccount
-- (NSArray *)emailAddresses {
-    NSArray *addresses = %orig;
-    NSArray *fromAddresses = addresses_for_account(self.identifier);
+static NSArray *emailAddresses(MailAccount *account, NSArray *realAddresses) {
+    NSArray *fromAddresses = addresses_for_account(account.identifier);
     if (fromAddresses.count) {
         NSMutableArray *newAddresses = [[NSMutableArray alloc] init];
         NSMutableSet *seenAddresses = [[NSMutableSet alloc] init];
-        for (NSString *address in [fromAddresses arrayByAddingObjectsFromArray:addresses]) {
+        for (NSString *address in [fromAddresses arrayByAddingObjectsFromArray:realAddresses]) {
             if (address.length && ![seenAddresses containsObject:address]) {
                 [newAddresses addObject:address];
                 [seenAddresses addObject:address];
             }
         }
-        addresses = newAddresses;
+        return newAddresses;
     }
-    return addresses;
+    return realAddresses;
+}
+
+@interface GmailAccount: MailAccount
+@end
+%group IMAP
+%hook GmailAccount
+- (NSArray *)emailAddresses {
+    return emailAddresses(self, %orig);
 }
 %end
 %end
 
-%hook NSBundle
-- (BOOL)load {
-    BOOL success = %orig;
-    if (success && [self.bundleIdentifier isEqualToString:@"com.apple.IMAP"]) {
-        static dispatch_once_t once;
-        dispatch_once(&once, ^{
-            %init(IMAP);
-        });
+%hook MailAccount
+
++ (void)initialize {
+    if (self == %c(GmailAccount)) {
+        %init(IMAP);
     }
-    return success;
+    %orig;
 }
+
+- (NSArray *)emailAddresses {
+    return emailAddresses(self, %orig);
+}
+
 %end
 
 %ctor {

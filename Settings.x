@@ -1,9 +1,22 @@
 #import <Preferences/Preferences.h>
 
-#import "GmailAccount.h"
+#import "MailAccount.h"
+
+@interface PSListController ()
+- (MailAccount *)account;
+@end
+
+static void insertSpecifier(PSListController *controller, NSMutableArray *specifiers, NSUInteger index) {
+    PSTextFieldSpecifier *specifier = [PSTextFieldSpecifier preferenceSpecifierNamed:@"From" target:controller set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSEditTextCell edit:nil];
+    [specifier setKeyboardType:UIKeyboardTypeEmailAddress autoCaps:UITextAutocapitalizationTypeNone autoCorrection:UITextAutocorrectionTypeDefault];
+    [specifier setProperty:@"net.joedj.gmailsender" forKey:@"defaults"];
+    [specifier setProperty:@"net.joedj.gmailsender" forKey:@"PostNotification"];
+    [specifier setProperty:controller.account.identifier forKey:@"key"];
+    specifier.placeholder = @"example@domain.com";
+    [specifiers insertObject:specifier atIndex:index];
+}
 
 @interface AccountPSDetailController: PSListController
-- (GmailAccount *)account;
 @end
 %group MobileMailSettings
 %hook AccountPSDetailController
@@ -19,13 +32,7 @@
                     break;
                 }
             }
-            PSSpecifier *specifier = [PSTextFieldSpecifier preferenceSpecifierNamed:@"From" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSEditTextCell edit:nil];
-            [specifier setKeyboardType:UIKeyboardTypeEmailAddress autoCaps:UITextAutocapitalizationTypeNone autoCorrection:UITextAutocorrectionTypeDefault];
-            [specifier setProperty:@"net.joedj.gmailsender" forKey:@"defaults"];
-            [specifier setProperty:@"net.joedj.gmailsender" forKey:@"PostNotification"];
-            [specifier setProperty:self.account.identifier forKey:@"key"];
-            ((PSTextFieldSpecifier *)specifier).placeholder = @"example@domain.com";
-            [specifiers insertObject:specifier atIndex:specifierIndex];
+            insertSpecifier(self, specifiers, specifierIndex);
         }
     }
     return specifiers;
@@ -33,16 +40,37 @@
 %end
 %end
 
-%hook NSBundle
-- (BOOL)load {
-    BOOL success = %orig;
-    if (success && [self.bundleIdentifier isEqualToString:@"com.apple.mobilemail.settings"]) {
-        static dispatch_once_t once;
-        dispatch_once(&once, ^{
-            %init(MobileMailSettings);
-        });
+@interface ASSettingsAccountController: PSListController
+@end
+%group DataAccessUI
+%hook ASSettingsAccountController
+- (NSArray *)specifiers {
+    NSMutableArray *specifiers = (NSMutableArray *)self->_specifiers;
+    if (!specifiers) {
+        specifiers = [NSMutableArray arrayWithArray:%orig];
+        self->_specifiers = specifiers;
+        NSUInteger specifierIndex = 0;
+        for (PSSpecifier *specifier in specifiers) {
+            specifierIndex++;
+            if ([specifier.identifier isEqualToString:@"EMAIL"]) {
+                break;
+            }
+        }
+        insertSpecifier(self, specifiers, specifierIndex);
     }
-    return success;
+    return specifiers;
+}
+%end
+%end
+
+%hook PSListController
++ (void)initialize {
+    if (self == %c(AccountPSDetailController)) {
+        %init(MobileMailSettings);
+    } else if (self == %c(ASSettingsAccountController)) {
+        %init(DataAccessUI);
+    }
+    %orig;
 }
 %end
 
