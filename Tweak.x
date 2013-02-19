@@ -22,7 +22,7 @@ static NSArray *addresses_for_account(NSString *identifier) {
     }
 }
 
-static NSArray *emailAddresses(MailAccount *account, NSArray *realAddresses) {
+static NSArray *merge_addresses(MailAccount *account, NSArray *realAddresses) {
     NSArray *fromAddresses = addresses_for_account(account.identifier);
     if (fromAddresses.count) {
         NSMutableArray *newAddresses = [[NSMutableArray alloc] init];
@@ -43,24 +43,18 @@ static NSArray *emailAddresses(MailAccount *account, NSArray *realAddresses) {
 %group IMAP
 %hook GmailAccount
 - (NSArray *)emailAddresses {
-    return emailAddresses(self, %orig);
+    return merge_addresses(self, %orig);
 }
 %end
 %end
 
 %hook MailAccount
-
 + (void)initialize {
     if (self == %c(GmailAccount)) {
         %init(IMAP);
     }
     %orig;
 }
-
-- (NSArray *)emailAddresses {
-    return emailAddresses(self, %orig);
-}
-
 %end
 
 %ctor {

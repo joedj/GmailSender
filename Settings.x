@@ -40,35 +40,10 @@ static void insertSpecifier(PSListController *controller, NSMutableArray *specif
 %end
 %end
 
-@interface ASSettingsAccountController: PSListController
-@end
-%group DataAccessUI
-%hook ASSettingsAccountController
-- (NSArray *)specifiers {
-    NSMutableArray *specifiers = (NSMutableArray *)self->_specifiers;
-    if (!specifiers) {
-        specifiers = [NSMutableArray arrayWithArray:%orig];
-        self->_specifiers = specifiers;
-        NSUInteger specifierIndex = 0;
-        for (PSSpecifier *specifier in specifiers) {
-            specifierIndex++;
-            if ([specifier.identifier isEqualToString:@"EMAIL"]) {
-                break;
-            }
-        }
-        insertSpecifier(self, specifiers, specifierIndex);
-    }
-    return specifiers;
-}
-%end
-%end
-
 %hook PSListController
 + (void)initialize {
     if (self == %c(AccountPSDetailController)) {
         %init(MobileMailSettings);
-    } else if (self == %c(ASSettingsAccountController)) {
-        %init(DataAccessUI);
     }
     %orig;
 }
