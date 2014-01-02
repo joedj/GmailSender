@@ -1,1 +1,6 @@
-{ Filter = { Bundles = ( "com.apple.AccountSettings", "com.apple.AccountSettingsUIFramework" ); }; }
+{
+    Filter = {
+        Bundles = ( "com.apple.Preferences", "com.apple.AccountSettings", "com.apple.AccountSettingsUIFramework" );
+        Mode = Any;
+    };
+}
