@@ -1,5 +1,5 @@
 TARGET := iphone:clang::5.0
-ARCHS := armv7
+ARCHS := armv7 arm64
 
 ifdef CCC_ANALYZER_OUTPUT_FORMAT
   TARGET_CXX = $(CXX)
